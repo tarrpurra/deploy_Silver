@@ -3,10 +3,9 @@ python-dotenv
 openai
 aiohttp
 requests
-json
-logging
 pandas_ta
 yfinance
 gspread
 pandas
 numpy
+oauth2client
