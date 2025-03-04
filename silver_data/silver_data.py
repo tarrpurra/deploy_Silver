@@ -1,22 +1,58 @@
 import yfinance as yf
 import pandas as pd
+import json
+import os
 import logging
 from datetime import datetime, timedelta
 import gspread
-import pytz
+from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
+
+google_creds = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def authenticate_google_sheets(credentials_file, sheet_id):
-    scope = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_file(credentials_file, scopes=scope)
-    client = gspread.authorize(creds)
-    
-    # Access Sheet2 instead of Sheet1
-    sheet = client.open_by_key(sheet_id).worksheet("Sheet2")
-    return sheet
+import yfinance as yf
+import pandas as pd
+import json
+import os
+import logging
+from datetime import datetime, timedelta
+import gspread
+from dotenv import load_dotenv
+from google.oauth2.service_account import Credentials
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Load Google credentials from environment variable
+google_creds = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+def authenticate_google_sheets(sheet_id):
+    """
+    Authenticate with Google Sheets using credentials from environment variables.
+    """
+    try:
+        # Write the credentials to a temporary file
+        with open("temp_credentials.json", "w") as f:
+            json.dump(google_creds, f)
+
+        # Authenticate with Google Sheets
+        scope = ["https://www.googleapis.com/auth/spreadsheets"]
+        creds = Credentials.from_service_account_file("temp_credentials.json", scopes=scope)
+        client = gspread.authorize(creds)
+
+        # Access Sheet2 instead of Sheet1
+        sheet = client.open_by_key(sheet_id).worksheet("Sheet2")
+        return sheet
+    except Exception as e:
+        logging.error(f"Failed to authenticate with Google Sheets: {e}")
+        raise
+
 
 
 def fetch_silver_data():
@@ -123,5 +159,3 @@ def append_new_data(worksheet, new_data):
         logging.info(f"Deleting the first {rows_to_delete} rows to maintain size.")
         worksheet.delete_rows(2, rows_to_delete + 1)  # Keep header intact
         logging.info("Old rows deleted successfully.")
-
-fetch_silver_data()
