@@ -18,32 +18,38 @@ def authenticate_google_sheets(credentials_file, sheet_id):
     sheet = client.open_by_key(sheet_id).worksheet("Sheet2")
     return sheet
 
+
 def fetch_silver_data():
     today = datetime.now()
     sixty_days_ago = today - timedelta(days=60)
 
     logging.info(f"Fetching data from {sixty_days_ago.strftime('%Y-%m-%d')} to {today.strftime('%Y-%m-%d')}...")
 
-    ticker_symbol = "SI=F"  # Correct ticker for Silver Futures
+    ticker_symbol = "SI=F"  # Silver futures on Yahoo Finance
     data = yf.Ticker(ticker_symbol)
 
-    # Try fetching 15m data, fallback to 1h, then 1d
-    for interval in ["15m", "1h", "1d"]:
-        silver = data.history(start=sixty_days_ago, end=today, interval=interval)
-        if not silver.empty:
-            logging.info(f"Fetched data successfully using {interval} interval.")
-            break  # Exit loop if data is found
-    else:
-        logging.error(f"No data found for {ticker_symbol}. It may be delisted or incorrect.")
+    # Try fetching 15m data first
+    silver = data.history(start=sixty_days_ago, end=today, interval="15m")
+
+    if silver.empty:
+        logging.warning("15-minute data is empty. Switching to 1-day interval.")
+        silver = data.history(start=sixty_days_ago, end=today, interval="1d")
+
+    if silver.empty:
+        logging.error(f"No data found for {ticker_symbol}. It may be delisted or unavailable.")
         return None  # Stop execution if no data is available
 
-    # Drop unnecessary columns if they exist
+    # Drop unnecessary columns safely
     silver.drop(columns=["Dividends", "Stock Splits"], inplace=True, errors="ignore")
 
-    # ✅ Reset index before converting to a list
+    # Reset index for proper formatting
     silver.reset_index(inplace=True)
 
+    logging.info(f"Fetched {len(silver)} rows of data using interval: {'15m' if 'Datetime' in silver else '1d'}")
+
     return silver  # Return as a DataFrame for further processing
+
+# Example usage
 
 def load_existing_data(worksheet):
     """
@@ -118,6 +124,4 @@ def append_new_data(worksheet, new_data):
         worksheet.delete_rows(2, rows_to_delete + 1)  # Keep header intact
         logging.info("Old rows deleted successfully.")
 
-
-
-
+fetch_silver_data()

@@ -4,7 +4,7 @@ openai
 aiohttp
 requests
 pandas_ta
-yfinance
+yfinance==0.2.54
 gspread
 pandas
 numpy == 1.26.4
