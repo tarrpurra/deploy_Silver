@@ -89,5 +89,3 @@ target/
 
 # Exlcude the database file
 .db
-
-.Credentials.json
