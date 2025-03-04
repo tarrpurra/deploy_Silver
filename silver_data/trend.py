@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-npNaN = np.nan
 
 def calculate_macd(data, short_window=6, long_window=13, signal_window=5):
     """Calculate MACD with shorter window periods for faster response."""
